@@ -1,8 +1,5 @@
 {
-  "/(app)/decks/page": "app/(app)/decks/page.js",
-  "/(app)/review/page": "app/(app)/review/page.js",
-  "/(app)/daily/page": "app/(app)/daily/page.js",
-  "/(app)/profile/page": "app/(app)/profile/page.js",
-  "/(app)/decks/[id]/page": "app/(app)/decks/[id]/page.js",
-  "/(app)/quiz/page": "app/(app)/quiz/page.js"
+  "/(app)/page": "app/(app)/page.js",
+  "/(app)/quiz/page": "app/(app)/quiz/page.js",
+  "/(app)/decks/[id]/page": "app/(app)/decks/[id]/page.js"
 }

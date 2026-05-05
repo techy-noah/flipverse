@@ -469,3 +469,51 @@ export function getRandomQuestions(count: number): Question[] {
   const shuffled = [...questions].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }
+
+export async function cacheQuestions(questions: Array<Record<string, unknown>>): Promise<void> {
+  try {
+    const CACHE_NAME = 'flipverse-cache-v1';
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open(CACHE_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('questions')) {
+          db.createObjectStore('questions', { keyPath: 'id' });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+
+    const store = db.transaction('questions', 'readwrite').objectStore('questions');
+    for (const q of questions) {
+      store.put({ data: q, timestamp: Date.now(), id: q.id as string });
+    }
+  } catch {
+    // IndexedDB not available
+  }
+}
+
+export async function getCachedQuestions(): Promise<Question[] | null> {
+  try {
+    const CACHE_NAME = 'flipverse-cache-v1';
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open(CACHE_NAME, 1);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+
+    return new Promise((resolve) => {
+      const store = db.transaction('questions', 'readonly').objectStore('questions');
+      const request = store.getAll();
+      request.onsuccess = () => {
+        const entries = request.result as Array<{ data: Question; timestamp: number }>;
+        const valid = entries.filter((e) => Date.now() - e.timestamp < 7 * 24 * 60 * 60 * 1000);
+        resolve(valid.length > 0 ? valid.map((e) => e.data) : null);
+      };
+      request.onerror = () => resolve(null);
+    });
+  } catch {
+    return null;
+  }
+}

@@ -1,44 +1,53 @@
-import { Database } from './database.types';
-
-export type Tables = Database['public']['Tables'];
-export type Profile = Tables['profiles']['Row'];
-export type DeckRow = Tables['decks']['Row'];
-export type QuestionRow = Tables['questions']['Row'];
-export type DeckQuestion = Tables['deck_questions']['Row'];
-export type UserProgress = Tables['user_progress']['Row'];
-export type DailyChallenge = Tables['daily_challenges']['Row'];
-
 export interface Question {
   id: string;
-  deck_id: string;
   question: string;
   answer: string;
-  reference?: string;
-  difficulty: number;
+  reference: string;
+  book?: string;
+  category?: string;
+  difficulty?: 'easy' | 'medium' | 'hard' | number;
+  explanation?: string;
+  deck_id?: string;
 }
 
 export interface Deck {
   id: string;
   name: string;
-  description: string;
-  icon: string;
+  category?: string;
+  description?: string;
+  icon?: string;
   color: string;
+  totalQuestions?: number;
+  masteredCount?: number;
+  learningCount?: number;
+  newCount?: number;
 }
 
-export type ProgressStatus = 'new' | 'knew' | 'didnt_know';
-
-export interface DeckWithProgress extends Deck {
-  total_questions: number;
-  mastered: number;
-  learning: number;
-  new_cards: number;
+export interface UserProgress {
+  questionId: string;
+  status: 'new' | 'learning' | 'mastered';
+  correctCount: number;
+  wrongCount: number;
+  lastReviewed?: string;
+  nextReview?: string;
 }
 
-export interface QuizState {
-  currentIndex: number;
-  isFlipped: boolean;
-  answers: Record<string, ProgressStatus>;
-  completed: boolean;
+export interface Profile {
+  id: string;
+  username: string;
+  avatarUrl?: string;
+  streakCount: number;
+  totalCorrect: number;
+  totalWrong: number;
+  lastActive: string;
 }
 
-export type SwipeDirection = 'left' | 'right' | null;
+export interface StatItem {
+  label: string;
+  value: string | number;
+  icon?: React.ReactNode;
+  color?: 'primary' | 'success' | 'error' | 'warning';
+}
+
+export type AnswerAction = 'knew' | 'didnt_know';
+export type ProgressStatus = 'new' | 'knew' | 'didnt_know' | 'learning' | 'mastered';

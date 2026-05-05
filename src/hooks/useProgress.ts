@@ -9,6 +9,9 @@ interface ProgressData {
   [questionId: string]: {
     status: ProgressStatus;
     attempts: number;
+    correctStreak: number;
+    wrongCount: number;
+    correctCount: number;
     lastReviewed: string;
   };
 }
@@ -27,27 +30,49 @@ export function useProgress() {
     }
   }, []);
 
-  const saveProgress = useCallback((newProgress: ProgressData) => {
-    setProgress(newProgress);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newProgress));
-    } catch {
-      // Storage full or unavailable
-    }
-  }, []);
-
   const recordAnswer = useCallback(
     (questionId: string, status: ProgressStatus) => {
       setProgress((prev) => {
-        const existing = prev[questionId];
+        const existing = prev[questionId] || {
+          status: 'new' as ProgressStatus,
+          attempts: 0,
+          correctStreak: 0,
+          wrongCount: 0,
+          correctCount: 0,
+          lastReviewed: '',
+        };
+
+        let newStatus = status;
+        let newStreak = existing.correctStreak;
+        let newCorrectCount = existing.correctCount;
+        let newWrongCount = existing.wrongCount;
+
+        if (status === 'knew') {
+          newStreak += 1;
+          newCorrectCount += 1;
+          if (newStreak >= 2) {
+            newStatus = 'mastered';
+          } else {
+            newStatus = 'learning';
+          }
+        } else {
+          newStreak = 0;
+          newWrongCount += 1;
+          newStatus = 'learning';
+        }
+
         const updated = {
           ...prev,
           [questionId]: {
-            status,
-            attempts: (existing?.attempts || 0) + 1,
+            status: newStatus,
+            attempts: existing.attempts + 1,
+            correctStreak: newStreak,
+            correctCount: newCorrectCount,
+            wrongCount: newWrongCount,
             lastReviewed: new Date().toISOString(),
           },
         };
+
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         return updated;
       });
@@ -57,13 +82,23 @@ export function useProgress() {
 
   const getMistakes = useCallback(() => {
     return Object.entries(progress)
-      .filter(([, data]) => data.status === 'didnt_know')
+      .filter(([, data]) => data.status === 'learning' && data.wrongCount > data.correctCount)
       .map(([id]) => id);
   }, [progress]);
 
   const getMastered = useCallback(() => {
     return Object.entries(progress)
-      .filter(([, data]) => data.status === 'knew')
+      .filter(([, data]) => data.status === 'mastered' || data.correctStreak >= 2)
+      .map(([id]) => id);
+  }, [progress]);
+
+  const getReviewQueue = useCallback(() => {
+    return Object.entries(progress)
+      .filter(([, data]) => data.status === 'learning')
+      .sort(([, a], [, b]) => {
+        if (a.wrongCount !== b.wrongCount) return b.wrongCount - a.wrongCount;
+        return new Date(a.lastReviewed).getTime() - new Date(b.lastReviewed).getTime();
+      })
       .map(([id]) => id);
   }, [progress]);
 
@@ -76,7 +111,7 @@ export function useProgress() {
       questionIds.forEach((id) => {
         const p = progress[id];
         if (!p || p.status === 'new') newCards++;
-        else if (p.status === 'knew') mastered++;
+        else if (p.status === 'mastered' || p.correctStreak >= 2) mastered++;
         else learning++;
       });
 
@@ -85,11 +120,24 @@ export function useProgress() {
     [progress]
   );
 
+  const getStats = useCallback(() => {
+    const entries = Object.values(progress);
+    return {
+      total: entries.length,
+      mastered: entries.filter((e) => e.status === 'mastered' || e.correctStreak >= 2).length,
+      learning: entries.filter((e) => e.status === 'learning').length,
+      totalCorrect: entries.reduce((sum, e) => sum + e.correctCount, 0),
+      totalWrong: entries.reduce((sum, e) => sum + e.wrongCount, 0),
+    };
+  }, [progress]);
+
   return {
     progress,
     recordAnswer,
     getMistakes,
     getMastered,
+    getReviewQueue,
     getDeckProgress,
+    getStats,
   };
 }

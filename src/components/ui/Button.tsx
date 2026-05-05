@@ -16,7 +16,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none select-none';
+    'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150 ease-out active:scale-[0.96] active:opacity-80 disabled:opacity-50 disabled:pointer-events-none select-none will-change-transform';
 
   const variants = {
     primary: 'bg-primary hover:bg-primary-hover text-white',
