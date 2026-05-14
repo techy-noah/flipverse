@@ -257,19 +257,19 @@ export const FlipCard = memo(function FlipCard({ question, onAnswer, onNext, onP
             willChange: 'transform',
           }}
         >
-          <div className="flex items-center justify-between px-4 pt-4">
+          <div className="flex items-center justify-center px-4 pt-4">
             <span className="text-xs text-text-muted font-medium">Answer</span>
-            {question.reference && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
-                {question.reference}
-              </span>
-            )}
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center px-6 py-4 gap-3">
+          <div className="flex-1 flex flex-col items-center justify-center px-6 py-4 gap-2">
             <p className="text-lg font-semibold text-text text-center leading-relaxed">
               {question.answer}
             </p>
+            {question.reference && (
+              <p className="text-sm text-primary font-medium text-center">
+                — {question.reference}
+              </p>
+            )}
             {question.explanation && (
               <p className="text-xs text-text-secondary text-center leading-relaxed line-clamp-3">
                 {question.explanation}

@@ -28,20 +28,21 @@ function QuizContent() {
   );
 
   const quizQuestions = useMemo(() => {
+    let filtered: Question[];
     if (mode === 'daily') {
       return getRandomQuestions(10);
     }
-    if (mode === 'shuffle') {
-      return [...allQuestions].sort(() => Math.random() - 0.5);
+    if (mode === 'shuffle' || mode === 'all') {
+      filtered = [...allQuestions];
+    } else if (mode === 'learning') {
+      filtered = allQuestions.filter((q) => progress[q.id]?.status === 'learning');
+    } else if (mode === 'new') {
+      filtered = allQuestions.filter((q) => !progress[q.id] || progress[q.id]?.status === 'new');
+    } else {
+      filtered = [...allQuestions];
     }
-    if (mode === 'learning') {
-      return allQuestions.filter((q) => progress[q.id]?.status === 'learning');
-    }
-    if (mode === 'new') {
-      return allQuestions.filter((q) => !progress[q.id] || progress[q.id]?.status === 'new');
-    }
-    return allQuestions;
-  }, [allQuestions, mode]);
+    return filtered.sort(() => Math.random() - 0.5);
+  }, [allQuestions, mode, progress]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<AnswerRecord[]>([]);
@@ -186,6 +187,9 @@ function QuizContent() {
                     <div className="min-w-0 flex-1">
                       <p className="text-xs text-text-secondary line-clamp-1">{q.question}</p>
                       <p className="text-[10px] text-text-muted mt-0.5">{q.answer}</p>
+                      {q.reference && (
+                        <p className="text-[10px] text-primary mt-0.5">{q.reference}</p>
+                      )}
                     </div>
                   </div>
                 );
